@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sotechy order checker</title>
+<meta name="description" content="Check any Sotechy order paid in USDT on X Layer: where its money is, and what the TapeOut circuits decide.">
+<style>
+  :root {
+    --bg: #17120E; --card: #221B16; --line: #3A322C; --text: #FFF1DF; --muted: #B3A99F;
+    --orange: #F7931E; --yellow: #FDB913; --green: #22C55E; --red: #F26B5E; --grey: #A8A29E;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.02em; }
+  .brand b { color: var(--orange); }
+  h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -0.03em; margin: 28px 0 10px; }
+  h1 span { color: var(--orange); }
+  .lead { color: var(--muted); margin: 0 0 24px; max-width: 560px; }
+  form { display: flex; gap: 10px; }
+  input { flex: 1; min-width: 0; font: inherit; font-size: 18px; padding: 14px 18px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); color: var(--text); }
+  input:focus { outline: none; border-color: var(--orange); }
+  button { font: inherit; font-weight: 700; padding: 14px 22px; border-radius: 14px; border: 0; background: var(--orange); color: #17120E; cursor: pointer; }
+  button:disabled { opacity: 0.6; cursor: wait; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px; margin-top: 18px; }
+  .note { color: var(--muted); }
+  .error { color: var(--red); }
+  .status { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: 14px; background: #2E2620; }
+  .chip i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .amount { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-top: 18px; }
+  .facts { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .facts li { display: flex; gap: 10px; align-items: center; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+  .yes { background: var(--green); color: #17120E; }
+  .no { background: #3A322C; color: var(--muted); }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; }
+  .verdict { font-weight: 700; font-size: 18px; }
+  img.receipt { width: 100%; max-width: 320px; border-radius: 18px; display: block; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; word-break: break-all; }
+  a { color: var(--yellow); }
+  footer { margin-top: 36px; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">Sotechy <b>×</b> X Layer</div>
+  <h1>Where's the money for <span>your order?</span></h1>
+  <p class="lead">Every Sotechy order paid in USDT on X Layer waits in an escrow. TapeOut circuits decide when it goes to the store, or back to the buyer. Enter an order number to see it, read straight from the chain.</p>
+
+  <form id="form">
+    <input id="order" inputmode="numeric" pattern="[0-9]*" placeholder="Order number, e.g. 1024" aria-label="Order number" required>
+    <button id="go">Check</button>
+  </form>
+
+  <div id="out"></div>
+
+  <footer id="foot"></footer>
+</main>
+
+<script>
+// Filled in when the contracts are deployed on X Layer mainnet (contracts/script/Deploy.s.sol prints them)
+const CONFIG = {
+  rpc: "https://rpc.xlayer.tech",
+  escrow: "",
+  explorer: "https://www.oklink.com/xlayer",
+};
+
+// Function selectors (cast sig "…")
+const SEL = {
+  order: "0x21603f43",
+  verdictOf: "0xbcaa6cf7",
+  breakerTripped: "0xe14796f0",
+  receipts: "0xf400b10e",
+  tokenURI: "0xc87b56dd",
+  verdictCircuit: "0x40ef133e",
+  limitCircuit: "0x3776f8eb",
+  breakerCircuit: "0xbbbc924c",
+};
+
+const STAGES = ["No order", "Waiting for payment", "Paid, money held", "Paid to the store", "Refunded to the buyer"];
+const STAGE_COLOUR = ["#A8A29E", "#A8A29E", "#FDB913", "#22C55E", "#A8A29E"];
+
+const $ = (id) => document.getElementById(id);
+const word = (n) => BigInt(n).toString(16).padStart(64, "0");
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+async function call(to, data) {
+  const res = await fetch(CONFIG.rpc, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to, data }, "latest"] }),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message);
+  return json.result.slice(2);
+}
+
+const words = (hex) => Array.from({ length: hex.length / 64 }, (_, i) => hex.slice(i * 64, i * 64 + 64));
+const num = (w) => BigInt("0x" + w);
+const addr = (w) => "0x" + w.slice(24);
+const bool = (w) => num(w) !== 0n;
+
+function decodeString(hex) {
+  const offset = Number(num(hex.slice(0, 64))) * 2;
+  const len = Number(num(hex.slice(offset, offset + 64)));
+  const bytes = hex.slice(offset + 64, offset + 64 + len * 2);
+  return new TextDecoder().decode(new Uint8Array(bytes.match(/../g).map((b) => parseInt(b, 16))));
+}
+
+const usdt = (units) => {
+  const whole = units / 1000000n;
+  const cents = (units % 1000000n).toString().padStart(6, "0").slice(0, 2);
+  return `${whole.toLocaleString("en-US")}.${cents}`;
+};
+const date = (s) => (s ? new Date(Number(s) * 1000).toLocaleString() : "not yet");
+const link = (a) => `<a href="${CONFIG.explorer}/address/${a}" target="_blank" rel="noopener">${a.slice(0, 6)}…${a.slice(-4)}</a>`;
+
+async function check(orderId) {
+  const id = word(orderId);
+  const w = words(await call(CONFIG.escrow, SEL.order + id));
+  const o = {
+    payTo: addr(w[0]), amount: num(w[1]), storeId: num(w[2]), payBy: num(w[3]), shipBy: num(w[4]), feeBps: num(w[5]),
+    tokenId: num(w[6]), tokens: num(w[7]), stage: Number(num(w[8])), buyer: addr(w[9]), paidAt: num(w[10]), shippedAt: num(w[11]),
+    delivered: bool(w[12]), disputeOpen: bool(w[13]), buyerWon: bool(w[14]), cancelled: bool(w[15]), reviewed: bool(w[16]),
+  };
+  if (o.stage === 0) return `<div class="card note">There's no Sotechy order ${esc(orderId)} on X Layer.</div>`;
+
+  let verdict = "";
+  if (o.stage === 2) {
+    const [release, refund, limitOk, breakerOk, verdictRelease] = words(await call(CONFIG.escrow, SEL.verdictOf + id)).map(bool);
+    const said = release ? "Release to the store: anyone can settle it now."
+      : refund ? "Refund the buyer: anyone can settle it now."
+      : verdictRelease && !limitOk ? "Hold: above this new store's limit, waiting for Sotechy's review."
+      : verdictRelease && !breakerOk ? "Hold: this store's breaker is tripped after a dispute."
+      : o.disputeOpen ? "Hold: a dispute is open."
+      : o.shippedAt > 0n ? "Waiting for the buyer to confirm delivery, or for the confirm window to pass."
+      : "Waiting for the store to ship, before the ship-by date.";
+    verdict = `<div class="card"><h2>What the circuits say now</h2><div class="verdict">${said}</div>
+      <ul class="facts" style="margin-top:12px">
+        ${fact("Order Verdict: release", verdictRelease)}${fact("Order Verdict: refund", refund)}
+        ${fact("New-Store Limit: within the limit", limitOk)}${fact("Store Breaker: store clear", breakerOk)}
+      </ul></div>`;
+  }
+
+  let picture = "";
+  try {
+    const receipts = addr(await call(CONFIG.escrow, SEL.receipts));
+    if (!/^0x0+$/.test(receipts)) {
+      const uri = decodeString(await call(receipts, SEL.tokenURI + id));
+      const meta = JSON.parse(atob(uri.split(",")[1]));
+      if (meta.image && meta.image.startsWith("data:image/svg+xml;base64,")) picture = `<img class="receipt" src="${meta.image}" alt="${esc(meta.name)}">`;
+    }
+  } catch { /* no receipt yet */ }
+
+  return `
+    <div class="card">
+      <div class="status">
+        <div><div class="note">Order ${esc(orderId)} · store ${o.storeId}</div><div class="amount">${usdt(o.amount)} USDT</div></div>
+        <span class="chip"><i style="background:${STAGE_COLOUR[o.stage]}"></i>${STAGES[o.stage]}</span>
+      </div>
+      <div class="grid">
+        <div><h2>What happened</h2><ul class="facts">
+          ${fact("Paid", o.stage >= 2)}${fact("Shipped", o.shippedAt > 0n)}${fact("Buyer confirmed delivery", o.delivered)}
+          ${fact("Dispute open", o.disputeOpen)}${fact("Store cancelled", o.cancelled)}${fact("Reviewed by Sotechy", o.reviewed)}
+        </ul></div>
+        <div>${picture || '<h2>Receipt</h2><p class="note">The receipt NFT appears here once the order is paid.</p>'}</div>
+      </div>
+      <dl style="margin-top:18px">
+        <dt>Paid</dt><dd>${date(o.paidAt)}</dd>
+        <dt>Ship by</dt><dd>${date(o.shipBy)}</dd>
+        <dt>Store paid to</dt><dd>${link(o.payTo)}</dd>
+        ${o.stage >= 2 ? `<dt>Buyer</dt><dd>${link(o.buyer)}</dd>` : ""}
+        ${o.tokens > 0n ? `<dt>Tokens on release</dt><dd>${o.tokens.toLocaleString("en-US")} of store token ${o.tokenId}</dd>` : ""}
+      </dl>
+    </div>${verdict}`;
+}
+
+function fact(label, on) {
+  return `<li><span class="dot ${on ? "yes" : "no"}">${on ? "✓" : ""}</span>${esc(label)}</li>`;
+}
+
+async function footer() {
+  if (!CONFIG.escrow) return;
+  try {
+    const [v, l, b] = await Promise.all([SEL.verdictCircuit, SEL.limitCircuit, SEL.breakerCircuit].map((s) => call(CONFIG.escrow, s)));
+    $("foot").innerHTML = `Escrow ${link(CONFIG.escrow)} · TapeOut circuits on OrderGuard: Order Verdict #${num(v)}, New-Store Limit #${num(l)}, Store Breaker #${num(b)} · Read live from X Layer`;
+  } catch { /* the footer is optional */ }
+}
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const orderId = $("order").value.trim();
+  if (!/^\d{1,30}$/.test(orderId)) return;
+  history.replaceState(null, "", `?order=${orderId}`);
+  if (!CONFIG.escrow) {
+    $("out").innerHTML = `<div class="card note">The escrow isn't deployed on X Layer mainnet yet. Check back soon.</div>`;
+    return;
+  }
+  $("go").disabled = true;
+  $("out").innerHTML = `<div class="card note">Reading X Layer…</div>`;
+  try {
+    $("out").innerHTML = await check(orderId);
+  } catch (err) {
+    $("out").innerHTML = `<div class="card error">Couldn't read X Layer right now (${esc(err.message)}). Try again in a moment.</div>`;
+  } finally {
+    $("go").disabled = false;
+  }
+});
+
+const fromUrl = new URLSearchParams(location.search).get("order");
+if (fromUrl) { $("order").value = fromUrl; $("form").requestSubmit(); }
+footer();
+</script>
+</body>
+</html>
