@@ -8,3 +8,5 @@ broadcast/
 !.env.example
 *.log
 .DS_Store
+
+__pycache__/
