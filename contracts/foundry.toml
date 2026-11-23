@@ -9,6 +9,8 @@ script = "script"
 evm_version = "cancun"
 optimizer = true
 optimizer_runs = 200
+# The receipt picture is one long string; the IR pipeline compiles it without stack limits
+via_ir = true
 # Tests and scripts read the circuits' bytes from ../circuits/netlists.json
 fs_permissions = [{ access = "read", path = "../circuits/netlists.json" }]
 remappings = ["forge-std/=lib/forge-std/src/"]
@@ -21,3 +23,7 @@ xlayer = "https://rpc.xlayer.tech"
 
 [fmt]
 line_length = 120
+
+[lint]
+# The vendored SotechyTokens stays exactly as it is in Sotechy-App
+ignore = ["src/vendor/**"]
