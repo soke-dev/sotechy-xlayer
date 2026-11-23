@@ -9,6 +9,11 @@ interface IERC20 {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
 }
 
+/// @notice EIP-2612: approving by signature, so the buyer needs no OKB for gas
+interface IERC20Permit {
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
+}
+
 interface ISotechyTokens {
     function mint(uint256 id, address to, uint256 amount, bytes32 ref) external;
 }
@@ -232,15 +237,33 @@ contract SotechyEscrow {
 
     /// @notice The buyer pays the exact amount (after approving it). The receipt NFT is minted to them.
     function pay(uint256 orderId) external nonReentrant whenNotPaused {
+        _payFrom(orderId, msg.sender);
+    }
+
+    /// @notice Sotechy pays the gas: the buyer signs a USDT permit for the order's exact amount, and Sotechy's
+    /// operator sends it. Only the operator can, so a permit can't be used for an order the buyer didn't choose.
+    function payFor(uint256 orderId, address buyer, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external
+        onlyOperator
+        nonReentrant
+        whenNotPaused
+    {
+        if (buyer == address(0)) revert ZeroAddress();
+        // If someone sends the permit first, the allowance is already there and the payment still goes through
+        try IERC20Permit(address(usdt)).permit(buyer, address(this), _orders[orderId].amount, deadline, v, r, s) {} catch {}
+        _payFrom(orderId, buyer);
+    }
+
+    function _payFrom(uint256 orderId, address buyer) internal {
         Order storage o = _orders[orderId];
         if (o.stage != Stage.Open) revert WrongStage(orderId, o.stage);
         if (block.timestamp > o.payBy) revert PaymentWindowClosed(orderId);
         o.stage = Stage.Paid;
-        o.buyer = msg.sender;
+        o.buyer = buyer;
         o.paidAt = uint40(block.timestamp);
-        _pull(msg.sender, o.amount);
-        if (address(receipts) != address(0)) receipts.issue(orderId, msg.sender, o.storeId);
-        emit Paid(orderId, msg.sender, o.amount);
+        _pull(buyer, o.amount);
+        if (address(receipts) != address(0)) receipts.issue(orderId, buyer, o.storeId);
+        emit Paid(orderId, buyer, o.amount);
     }
 
     /// @notice The store (or Sotechy, from the store's dashboard) marks the order sent
