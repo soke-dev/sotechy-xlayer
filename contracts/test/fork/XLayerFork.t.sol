@@ -7,6 +7,13 @@ import {SotechyOrderReceipts} from "../../src/SotechyOrderReceipts.sol";
 import {ITapeoutBeacon, ITapeoutProcessor, ITapeoutTransistors} from "../../src/interfaces/ITapeout.sol";
 import {MockUSDT} from "../mocks/MockUSDT.sol";
 
+interface IUSDT0 {
+    function DOMAIN_SEPARATOR() external view returns (bytes32);
+    function nonces(address owner) external view returns (uint256);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
+}
+
 /// @notice Tapes out our circuits on the real OrderGuard processor, on a fork of X Layer mainnet, and checks
 /// the chain's own evaluator against the rules, then runs the escrow on it. Nothing is spent for real.
 /// Run: FORK=true forge test --match-path "test/fork/*"
@@ -144,6 +151,37 @@ contract XLayerForkTest is Netlists {
         vm.prank(operator);
         escrow.resolveDispute(2, true);
         assertEq(uint8(escrow.order(2).stage), uint8(SotechyEscrow.Stage.Refunded));
+    }
+
+    /// @notice The pay page signs USD₮0 permits as name "USD₮0", version "1", chain 196: the real token must accept them
+    function test_RealUSDT0AcceptsThePayPagesPermit() public {
+        IUSDT0 usdt0 = IUSDT0(0x779Ded0c9e1022225f8E0630b35a9b54bE713736);
+        (address buyer, uint256 key) = makeAddrAndKey("buyer");
+        address escrow = makeAddr("escrow");
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes32 domain = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(unicode"USD₮0"),
+                keccak256("1"),
+                uint256(196),
+                address(usdt0)
+            )
+        );
+        assertEq(domain, usdt0.DOMAIN_SEPARATOR());
+        bytes32 structHash = keccak256(
+            abi.encode(
+                keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"),
+                buyer,
+                escrow,
+                25e6,
+                usdt0.nonces(buyer),
+                deadline
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(key, keccak256(abi.encodePacked("\x19\x01", domain, structHash)));
+        usdt0.permit(buyer, escrow, 25e6, deadline, v, r, s);
+        assertEq(usdt0.allowance(buyer, escrow), 25e6);
     }
 
     function _verdictRule(uint256 n) internal pure returns (bool release, bool refund) {
