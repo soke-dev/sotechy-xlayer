@@ -26,4 +26,6 @@ line_length = 120
 
 [lint]
 # The vendored SotechyTokens stays exactly as it is in Sotechy-App
-ignore = ["src/vendor/**"]
+ignore = ["src/vendor/SotechyTokens.sol"]
+# `1 << i` builds the circuits' input bits; the order is intended
+exclude_lints = ["incorrect-shift"]
