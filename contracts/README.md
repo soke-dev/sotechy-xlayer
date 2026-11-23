@@ -17,6 +17,7 @@ Holds each order's USDT and does what the circuits answer.
 |---|---|---|
 | `open` | Sotechy's operator | Sets the order's terms: the store's payout address, amount, pay-by and ship-by dates, and the tokens it earns |
 | `pay` | The buyer | Pays the exact amount (after approving it). The receipt NFT is minted to them |
+| `payFor` | Sotechy's operator, with the buyer's signature | **The buyer pays no gas.** They sign a USD₮0 permit (EIP-2612) for the exact amount, and Sotechy sends it. Only the operator can, so a permit can't pay for an order the buyer didn't choose |
 | `markShipped` | The store, or Sotechy | Records that it was sent |
 | `confirmDelivered` | The buyer, or Sotechy relaying "I got it" from the app | Records delivery, and settles at once if the circuits release |
 | `openDispute` | The buyer, or Sotechy | Holds the money and trips the store's breaker |

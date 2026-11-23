@@ -18,7 +18,7 @@ Sotechy is a marketplace of verified stores in Nigeria, live on the App Store an
 ## What's on X Layer
 
 ### 💸 Pay in USDT
-At checkout, a buyer pays the order's total in USDT (USD₮0) on X Layer, from OKX Wallet or any wallet. X Layer's fees are a fraction of a cent, and USDT moves from the OKX exchange to X Layer cheaply, which suits Nigerian buyers who already hold dollars there.
+At checkout, a buyer pays the order's total in USDT (USD₮0) on X Layer, from OKX Wallet or any wallet. They need no OKB for gas: they sign a permit, and Sotechy sends the payment and pays the fee. X Layer's fees are a fraction of a cent, and USDT moves from the OKX exchange to X Layer cheaply, which suits Nigerian buyers who already hold dollars there.
 
 ### 🛡️ TapeOut decides when the money moves
 The payment isn't sent to the store. It waits in the Sotechy escrow contract, and **TapeOut circuits decide what happens to it**:
