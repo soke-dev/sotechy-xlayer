@@ -4,7 +4,7 @@ out = "out"
 libs = ["lib"]
 test = "test"
 script = "script"
-solc_version = "0.8.28"
+# Our contracts pin 0.8.28; the vendored SotechyTokens keeps its own 0.8.24
 # X Layer runs the OP Stack; cancun is a safe target there
 evm_version = "cancun"
 optimizer = true
