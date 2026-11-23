@@ -12,7 +12,7 @@ optimizer_runs = 200
 # The receipt picture is one long string; the IR pipeline compiles it without stack limits
 via_ir = true
 # Tests and scripts read the circuits' bytes from ../circuits/netlists.json
-fs_permissions = [{ access = "read", path = "../circuits/netlists.json" }, { access = "read", path = "./out" }]
+fs_permissions = [{ access = "read", path = "../circuits/netlists.json" }, { access = "read", path = "./out" }, { access = "read", path = "../checker/index.html" }]
 remappings = ["forge-std/=lib/forge-std/src/"]
 
 [profile.default.fuzz]
