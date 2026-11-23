@@ -7,6 +7,7 @@
     <a href="https://sotechy.shop">sotechy.shop</a> ·
     Main app: <a href="https://github.com/soke-dev/Sotechy-App">soke-dev/Sotechy-App</a>
   </p>
+  <p><a href="https://github.com/soke-dev/sotechy-xlayer/actions/workflows/ci.yml"><img src="https://github.com/soke-dev/sotechy-xlayer/actions/workflows/ci.yml/badge.svg" alt="CI"></a></p>
 </div>
 
 ---
