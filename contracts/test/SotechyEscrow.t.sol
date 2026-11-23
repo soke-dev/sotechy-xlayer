@@ -37,6 +37,75 @@ contract SotechyEscrowTest is Base {
         escrow.pay(ORDER);
     }
 
+    // ------------------------------------------------------------------
+    // Paying without gas: the buyer signs, Sotechy sends
+    // ------------------------------------------------------------------
+
+    function _permit(uint256 key, address owner_, uint256 value, uint256 deadline) internal view returns (uint8, bytes32, bytes32) {
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                usdt.DOMAIN_SEPARATOR(),
+                keccak256(abi.encode(usdt.PERMIT_TYPEHASH(), owner_, address(escrow), value, usdt.nonces(owner_), deadline))
+            )
+        );
+        return vm.sign(key, digest);
+    }
+
+    function _openOnly(uint256 orderId, uint96 amount) internal {
+        vm.prank(operator);
+        escrow.open(orderId, store, STORE_ID, amount, uint40(block.timestamp + 1 hours), uint40(block.timestamp + 3 days), STORE_TOKEN, 0);
+    }
+
+    function test_SotechyPaysTheGasForTheBuyersPermit() public {
+        (address signer, uint256 key) = makeAddrAndKey("gasless buyer");
+        usdt.mint(signer, 50 * USDT);
+        _openOnly(ORDER, 50 * USDT);
+        (uint8 v, bytes32 r, bytes32 s) = _permit(key, signer, 50 * USDT, block.timestamp + 1 hours);
+
+        vm.prank(operator);
+        escrow.payFor(ORDER, signer, block.timestamp + 1 hours, v, r, s);
+
+        assertEq(usdt.balanceOf(signer), 0);
+        assertEq(usdt.balanceOf(address(escrow)), 50 * USDT);
+        assertEq(escrow.order(ORDER).buyer, signer);
+        assertEq(receipts.ownerOf(ORDER), signer, "the receipt goes to the buyer, not Sotechy");
+    }
+
+    function test_OnlySotechyRelaysPermits() public {
+        (address signer, uint256 key) = makeAddrAndKey("gasless buyer");
+        usdt.mint(signer, 50 * USDT);
+        _openOnly(ORDER, 50 * USDT);
+        (uint8 v, bytes32 r, bytes32 s) = _permit(key, signer, 50 * USDT, block.timestamp + 1 hours);
+        vm.prank(stranger);
+        vm.expectRevert(SotechyEscrow.NotOperator.selector);
+        escrow.payFor(ORDER, signer, block.timestamp + 1 hours, v, r, s);
+    }
+
+    function test_APermitSentFirstBySomeoneElseStillPays() public {
+        (address signer, uint256 key) = makeAddrAndKey("gasless buyer");
+        usdt.mint(signer, 50 * USDT);
+        _openOnly(ORDER, 50 * USDT);
+        (uint8 v, bytes32 r, bytes32 s) = _permit(key, signer, 50 * USDT, block.timestamp + 1 hours);
+        usdt.permit(signer, address(escrow), 50 * USDT, block.timestamp + 1 hours, v, r, s); // front-run
+
+        vm.prank(operator);
+        escrow.payFor(ORDER, signer, block.timestamp + 1 hours, v, r, s);
+        assertEq(uint8(stage(ORDER)), uint8(SotechyEscrow.Stage.Paid));
+    }
+
+    function test_AForgedPermitPaysNothing() public {
+        (address signer,) = makeAddrAndKey("gasless buyer");
+        (, uint256 otherKey) = makeAddrAndKey("someone else");
+        usdt.mint(signer, 50 * USDT);
+        _openOnly(ORDER, 50 * USDT);
+        (uint8 v, bytes32 r, bytes32 s) = _permit(otherKey, signer, 50 * USDT, block.timestamp + 1 hours);
+        vm.prank(operator);
+        vm.expectRevert(SotechyEscrow.TransferFailed.selector);
+        escrow.payFor(ORDER, signer, block.timestamp + 1 hours, v, r, s);
+        assertEq(usdt.balanceOf(signer), 50 * USDT);
+    }
+
     function test_OnlySotechyOpensOrders() public {
         vm.prank(stranger);
         vm.expectRevert(SotechyEscrow.NotOperator.selector);
