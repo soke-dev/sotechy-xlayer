@@ -1,0 +1,2 @@
+# TapeOut's spec files are copied in, not ours: keep them out of GitHub's language stats
+spec/** linguist-vendored
