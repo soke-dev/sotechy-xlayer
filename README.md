@@ -11,7 +11,7 @@
 
 ---
 
-> **Status: built and tested, launching on mainnet next.** Built for Build X, November to December 2026. The [Status](#status) table says what works today; mainnet addresses are added at launch.
+> **Status: live on X Layer mainnet.** Built for Build X, November to December 2026. The [Status](#status) table says what works today, and [Deployments](#deployments-x-layer-mainnet-chain-196) lists every address.
 
 Sotechy is a marketplace of verified stores in Nigeria, live on the App Store and the web. Every store has its own reward token, and every order gets a receipt. Buying online there runs on low trust: buyers pay strangers and hope the order arrives, and stores fear buyers who say it never did. This project brings Sotechy's checkout, rewards and receipts onto X Layer, and puts TapeOut circuits in charge of the money between buyer and store.
 
@@ -103,19 +103,24 @@ Turning the payment switch off only hides it for new orders: orders already paid
 | Receipt NFTs, and tokens minted on release | Done |
 | DeWEB order checker page, and its publish script | Done |
 | Launch scripts (tape out, deploy, publish), rehearsed on a copy of mainnet | Done |
-| Mainnet: circuits taped out, contracts deployed, checker published | Next |
+| Mainnet: circuits taped out, contracts deployed, checker published on DeWEB | Done |
 | In Sotechy-App: the switches, the pay page, the order screens, the store and admin views | In progress |
 
 ## Deployments (X Layer mainnet, chain 196)
 
-| | Address |
+| | Where |
 |---|---|
-| TapeOut processor (OrderGuard, #272) | [`0x57F3…a355`](https://www.oklink.com/xlayer/address/0x57F319CF056F72F48cF1dbb670F2A3DB007Aa355) |
-| Order Verdict, New-Store Limit, Store Breaker | circuit ids added at launch |
-| `SotechyEscrow` | added at launch |
-| `SotechyOrderReceipts` | added at launch |
-| `SotechyTokens` | added at launch |
-| Order checker on DeWEB | added at launch |
+| TapeOut processor (OrderGuard, processor #272) | [`0x57F319CF056F72F48cF1dbb670F2A3DB007Aa355`](https://www.oklink.com/xlayer/address/0x57F319CF056F72F48cF1dbb670F2A3DB007Aa355) |
+| **Order Verdict** circuit | **#26** on OrderGuard |
+| **New-Store Limit** circuit | **#27** on OrderGuard |
+| **Store Breaker** circuit | **#28** on OrderGuard |
+| `SotechyEscrow` | [`0xdfEE90861e00ed79963edB7e7c11facdBF930310`](https://www.oklink.com/xlayer/address/0xdfEE90861e00ed79963edB7e7c11facdBF930310) |
+| `SotechyOrderReceipts` | [`0x80b42099567D5eF1A8e8421bD38ae6cAc589F180`](https://www.oklink.com/xlayer/address/0x80b42099567D5eF1A8e8421bD38ae6cAc589F180) |
+| `SotechyTokens` | [`0x704c1Fc6e6adb2De17436b509e196F1A57968f7B`](https://www.oklink.com/xlayer/address/0x704c1Fc6e6adb2De17436b509e196F1A57968f7B) |
+| Order checker on DeWEB | `26.2.272.tape`, at [26-2-272.tapekit.org](https://26-2-272.tapekit.org/) (stored in circuit #26's container [`0xc3595E8d2405BD2df6ceC4Ef73452a41A892F52D`](https://www.oklink.com/xlayer/address/0xc3595E8d2405BD2df6ceC4Ef73452a41A892F52D)) |
+| USD₮0 | [`0x779Ded0c9e1022225f8E0630b35a9b54bE713736`](https://www.oklink.com/xlayer/address/0x779Ded0c9e1022225f8E0630b35a9b54bE713736) |
+
+The circuits' NFTs and the contracts are owned by Sotechy's wallet [`0xB73B75db9Da49F37f6f8aB658355DBE7D1558e89`](https://www.oklink.com/xlayer/address/0xB73B75db9Da49F37f6f8aB658355DBE7D1558e89).
 
 ## Repository layout
 
