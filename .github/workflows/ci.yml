@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  circuits:
+    name: Circuits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Tests (official TAP-02 vectors, every input of every circuit)
+        run: npm test
+        working-directory: circuits
+      - name: netlists.json matches the builders
+        run: node src/emit.ts && git diff --exit-code netlists.json
+        working-directory: circuits
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cross-check with TapeOut's reference evaluator
+        run: python circuits/test/check_reference.py
+
+  contracts:
+    name: Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: Unit tests
+        run: forge test
+        working-directory: contracts
+      - name: On a fork of X Layer mainnet, against the real OrderGuard processor
+        run: FORK=true forge test --match-path "test/fork/*"
+        working-directory: contracts
