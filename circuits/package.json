@@ -1,0 +1,10 @@
+{
+  "name": "@sotechy-xlayer/circuits",
+  "private": true,
+  "type": "module",
+  "description": "Sotechy's TapeOut circuits: a TAP-02 netlist toolkit, the circuits, and exhaustive tests",
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.ts\""
+  }
+}
