@@ -1,9 +1,8 @@
 name: CI
 
+# Run by hand from the Actions tab (Run workflow). The same checks run locally: see the README.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   circuits:
