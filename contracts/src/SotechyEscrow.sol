@@ -315,15 +315,17 @@ contract SotechyEscrow {
     // Asking the circuits
     // ------------------------------------------------------------------
 
-    /// @notice What the circuits would decide for this order now, for apps and the public order checker
+    /// @notice What the circuits would decide for this order now, for apps and the public order checker.
+    /// `verdictRelease` is the Order Verdict circuit's own answer; `release` also needs the limit and the breaker.
     function verdictOf(uint256 orderId)
         external
         view
-        returns (bool release, bool refund, bool limitOk, bool breakerOk)
+        returns (bool release, bool refund, bool limitOk, bool breakerOk, bool verdictRelease)
     {
         Order storage o = _orders[orderId];
-        if (o.stage != Stage.Paid) return (false, false, false, false);
-        (,, release, refund, limitOk, breakerOk) = _decide(o);
+        if (o.stage != Stage.Paid) return (false, false, false, false, false);
+        (,, verdictRelease, refund, limitOk, breakerOk) = _decide(o);
+        release = verdictRelease && limitOk && breakerOk;
     }
 
     function order(uint256 orderId) external view returns (Order memory) {
@@ -341,7 +343,9 @@ contract SotechyEscrow {
             if (mustDecide) revert WrongStage(orderId, o.stage);
             return;
         }
-        (bytes memory inputs, bytes memory outputs, bool release, bool refund, bool limitOk, bool breakerOk) = _decide(o);
+        (bytes memory inputs, bytes memory outputs, bool verdictRelease, bool refund, bool limitOk, bool breakerOk) = _decide(o);
+        // A release also needs the store within its limit (or reviewed) and its breaker clear; a refund never waits
+        bool release = verdictRelease && limitOk && breakerOk;
         if (!release && !refund) {
             if (mustDecide) revert NothingToDo(orderId);
             return;
@@ -351,7 +355,8 @@ contract SotechyEscrow {
         else _refund(orderId, o);
     }
 
-    /// @dev Builds the order's facts as input bits, asks the circuits, and applies the limit and the breaker to a release
+    /// @dev Builds the order's facts as input bits and asks all three circuits. `release` here is the Order Verdict's
+    /// own answer; callers combine it with `limitOk` and `breakerOk`.
     function _decide(Order storage o)
         internal
         view
@@ -386,9 +391,6 @@ contract SotechyEscrow {
         // Store Breaker: a beat with nothing new reads whether the store is clear
         (, bytes memory breakerOut) = _step(breakerCircuit, abi.encodePacked(s.breaker), hex"00");
         breakerOk = uint8(breakerOut[0]) & 1 != 0;
-
-        // A release also needs the store within its limit (or reviewed) and its breaker clear; a refund never waits
-        release = release && limitOk && breakerOk;
     }
 
     function _stepBreaker(uint32 storeId, bool opened, bool cleared) internal {

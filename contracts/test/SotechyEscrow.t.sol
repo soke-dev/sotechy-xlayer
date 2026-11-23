@@ -156,10 +156,11 @@ contract SotechyEscrowTest is Base {
         escrow.resolveDispute(ORDER, false);
         vm.warp(block.timestamp + 3 days);
 
-        (bool release,, bool limitOk, bool breakerOk) = escrow.verdictOf(ORDER);
-        assertFalse(release);
+        (bool release,, bool limitOk, bool breakerOk, bool verdictRelease) = escrow.verdictOf(ORDER);
+        assertTrue(verdictRelease, "the Order Verdict says release");
         assertTrue(limitOk);
         assertFalse(breakerOk, "the store's breaker is still tripped");
+        assertFalse(release, "so the money stays");
 
         vm.prank(operator);
         escrow.clearBreaker(STORE_ID);
@@ -203,8 +204,10 @@ contract SotechyEscrowTest is Base {
         vm.prank(buyer);
         escrow.confirmDelivered(ORDER);
         assertEq(uint8(stage(ORDER)), uint8(SotechyEscrow.Stage.Paid));
-        (,, bool limitOk,) = escrow.verdictOf(ORDER);
+        (bool release,, bool limitOk,, bool verdictRelease) = escrow.verdictOf(ORDER);
+        assertTrue(verdictRelease);
         assertFalse(limitOk);
+        assertFalse(release);
 
         vm.prank(operator);
         escrow.approveReview(ORDER);
