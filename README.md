@@ -11,7 +11,7 @@
 
 ---
 
-> **Status: in progress.** Built for Build X, November to December 2026. The [Status](#status) table says what works today; mainnet addresses are added as each part goes live.
+> **Status: built and tested, launching on mainnet next.** Built for Build X, November to December 2026. The [Status](#status) table says what works today; mainnet addresses are added at launch.
 
 Sotechy is a marketplace of verified stores in Nigeria, live on the App Store and the web. Every store has its own reward token, and every order gets a receipt. Buying online there runs on low trust: buyers pay strangers and hope the order arrives, and stores fear buyers who say it never did. This project brings Sotechy's checkout, rewards and receipts onto X Layer, and puts TapeOut circuits in charge of the money between buyer and store.
 
@@ -42,11 +42,13 @@ A page stored on chain, on our circuit's DeWEB container: enter an order number 
 
 The decisions run inside TapeOut circuits, minted on the existing **OrderGuard** processor on X Layer mainnet. Holding the money, the tokens, the receipts and the app run outside circuits.
 
-| Circuit | What it decides | Kind |
-|---|---|---|
-| **Order Verdict** | From the order's facts (paid, store verified, shipped, delivered, confirm window over, ship-by deadline passed, dispute open, dispute won by the buyer, store cancelled): **release** to the store, **refund** the buyer, or neither | Combinational (`eval`) |
-| **New-Store Limit** | Is this order bigger than a new store is allowed? If so, release waits for a Sotechy review | Combinational (`eval`), an 8-bit comparator |
-| **Store Breaker** | Has this store just had a dispute? It trips and stays tripped, pausing that store's automatic releases until Sotechy clears it | Sequential (`step`), one LATCH |
+| Circuit | What it decides | Kind | Gates |
+|---|---|---|---|
+| **Order Verdict** | From the order's facts (paid, store verified, shipped, delivered, confirm window over, ship-by deadline passed, dispute open, dispute won by the buyer, store cancelled): **release** to the store, **refund** the buyer, or neither | Combinational (`eval`) | 27 NAND |
+| **New-Store Limit** | Is this order bigger than a new store is allowed? If so, release waits for a Sotechy review | Combinational (`eval`), an 8-bit comparator | 40 NAND |
+| **Store Breaker** | Has this store just had a dispute? It trips and stays tripped, pausing that store's automatic releases until Sotechy clears it | Sequential (`step`), one LATCH | 5 NAND, 1 LATCH |
+
+Every circuit is checked on every possible input, by our TAP-02 evaluator, by TapeOut's own reference evaluator, and by the real OrderGuard processor on a fork of mainnet. Pinouts and rules: [circuits/README.md](circuits/README.md).
 
 The circuits are Sotechy's: each is an NFT on X Layer, so other marketplaces can use the same rules.
 
@@ -61,6 +63,17 @@ Buyer picks "Pay with USDT on X Layer" in the Sotechy app
       refund  → the buyer is paid back, no tokens,                              receipt: "Refunded"
       neither → nothing moves yet (a dispute or review is open)
 ```
+
+## Check it yourself
+
+```bash
+cd circuits && npm test && npm run check:reference        # Node 22.18+, Python 3; nothing to install
+cd ../contracts && git submodule update --init && forge test   # Foundry
+FORK=true forge test --match-path "test/fork/*"           # against the real OrderGuard, on a fork of X Layer mainnet
+bash script/rehearse.sh                                   # the whole launch on a local copy of X Layer
+```
+
+What the contracts do, step by step: [contracts/README.md](contracts/README.md). Launching on mainnet: [docs/LAUNCH.md](docs/LAUNCH.md).
 
 ## Turning it on in Sotechy
 
@@ -84,21 +97,34 @@ Turning the payment switch off only hides it for new orders: orders already paid
 
 | Part | Status |
 |---|---|
-| TapeOut circuit format (TAP-02) toolkit, checked against the official test vectors | In progress |
-| The three circuits, tested on every input | In progress |
-| The escrow, tested against the real OrderGuard processor on a mainnet fork | Planned |
-| Receipt NFTs, and tokens minted on release | Planned |
-| Mainnet: circuits minted, contracts deployed | Planned |
-| In Sotechy-App: the switches, the pay page, the order screens, the store and admin views | Planned |
-| DeWEB order checker | Planned |
+| TapeOut circuit format (TAP-02) toolkit, passing the official test vectors | Done |
+| The three circuits, tested on every input, and on the real OrderGuard processor | Done |
+| The escrow, tested with a mock processor and against the real OrderGuard on a mainnet fork | Done |
+| Receipt NFTs, and tokens minted on release | Done |
+| DeWEB order checker page, and its publish script | Done |
+| Launch scripts (tape out, deploy, publish), rehearsed on a copy of mainnet | Done |
+| Mainnet: circuits taped out, contracts deployed, checker published | Next |
+| In Sotechy-App: the switches, the pay page, the order screens, the store and admin views | In progress |
+
+## Deployments (X Layer mainnet, chain 196)
+
+| | Address |
+|---|---|
+| TapeOut processor (OrderGuard, #272) | [`0x57F3…a355`](https://www.oklink.com/xlayer/address/0x57F319CF056F72F48cF1dbb670F2A3DB007Aa355) |
+| Order Verdict, New-Store Limit, Store Breaker | circuit ids added at launch |
+| `SotechyEscrow` | added at launch |
+| `SotechyOrderReceipts` | added at launch |
+| `SotechyTokens` | added at launch |
+| Order checker on DeWEB | added at launch |
 
 ## Repository layout
 
 ```
 spec/        TapeOut's TAP-02 circuit format, reference evaluator and test vectors (CC0)
-circuits/    our circuit builder, the three circuits and their exhaustive tests   (coming)
-contracts/   the escrow, receipt NFTs and deploy scripts, with Foundry tests       (coming)
-checker/     the DeWEB order checker page                                         (coming)
+circuits/    the TAP-02 toolkit, the three circuits, netlists.json and their exhaustive tests
+contracts/   the escrow, the receipt NFT, the launch scripts, and Foundry tests (unit and mainnet fork)
+checker/     the order checker page, published on DeWEB
+docs/        the mainnet launch guide
 ```
 
 ## Hackathon work and baseline
