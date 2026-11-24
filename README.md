@@ -20,9 +20,6 @@ Sotechy is a marketplace of verified stores in Nigeria, live on the App Store an
 ### 💸 Pay in USDT
 At checkout, a buyer pays the order's total in USDT (USD₮0) on X Layer, from OKX Wallet or any wallet. They need no OKB for gas: they sign a permit, and Sotechy sends the payment and pays the fee. X Layer's fees are a fraction of a cent, and USDT moves from the OKX exchange to X Layer cheaply, which suits Nigerian buyers who already hold dollars there.
 
-### 🌍 Or pay with any coin
-While X Layer is Sotechy's main chain, a buyer can also pay with almost any coin on almost any chain (SOL, BTC, ETH, TRX, USDC on Solana and more) through NEAR Intents. The swap delivers the order's exact USDT on X Layer to a pay-in address Sotechy holds for that one order. That address signs the same permit a wallet buyer would, and Sotechy puts the USDT in the escrow, so the circuits treat the order like any other. A refund goes back through NEAR Intents as the coin the buyer paid with, to the refund address they gave.
-
 ### 🛡️ TapeOut decides when the money moves
 The payment isn't sent to the store. It waits in the Sotechy escrow contract, and **TapeOut circuits decide what happens to it**:
 
@@ -33,17 +30,15 @@ The payment isn't sent to the store. It waits in the Sotechy escrow contract, an
 The escrow does exactly what the circuits answer. Nobody, Sotechy included, can move the money any other way, and anyone can read the circuits on chain and check the rules.
 
 ### 🪙 Store tokens on X Layer
-Every Sotechy store has its own token, one token id per store on a single multi-token contract (`SotechyTokens`). Shoppers earn a store's token on delivered orders, send it to friends by username, and spend it at the store.
+Every Sotechy store has its own token, one token id per store on a single multi-token contract (`SotechyTokens`). Shoppers earn a store's token when an order is delivered, send it to friends by username, and spend it at the store.
 
-- **Orders paid into the escrow:** the escrow mints the earned tokens **only when the circuits release the money**, so a refunded or fake order earns nothing.
-- **X Layer as Sotechy's main chain:** every token change from every Sotechy order (earned, spent, sent, or taken back on a refund) is written to X Layer, however the order was paid, and Sotechy pays the gas. Sotechy's own record then writes escrow orders' tokens too, so nothing is minted twice and balances on X Layer always match Sotechy's.
-- X Layer starts from **24 November 2026**: changes from before then stay on the chain that already has them.
+Every token change from every Sotechy order (earned, spent, sent, or taken back on a refund) is written to X Layer, however the order was paid, and Sotechy pays the gas. An order the circuits refund was never delivered, so it earns nothing. Tokens and receipts are on X Layer from **24 November 2026**.
 
 ### 🧾 Receipt NFTs
 Two kinds, both on X Layer. Neither can be sold or sent on, and neither holds amounts or personal data.
 
 - **Escrow receipt** (`SotechyOrderReceipts`): minted to the buyer when they pay into the escrow. It follows the circuits' decisions (paid and held, shipped, on hold during a dispute, delivered, refunded), and its picture is drawn on chain from that status.
-- **Sotechy receipt** (`SotechyReceipts`): with X Layer as the main chain, every completed Sotechy order gets one. It records the store, the order number, the date and a fingerprint of the full receipt Sotechy keeps, so anyone holding the receipt can check it.
+- **Sotechy receipt** (`SotechyReceipts`): every completed Sotechy order gets one, however it was paid. It records the store, the order number, the date and a fingerprint of the full receipt Sotechy keeps, so anyone holding the receipt can check it.
 
 ### 🔍 A public order checker on DeWEB
 A page stored on chain, on our circuit's DeWEB container: enter an order number and see where its money is and what the circuits decided.
@@ -66,14 +61,15 @@ The circuits are Sotechy's: each is an NFT on X Layer, so other marketplaces can
 
 ```
 Buyer picks "Pay with USDT on X Layer" in the Sotechy app
-  (or any coin: NEAR Intents swaps it into the order's exact USDT on X Layer)
   → the exact total goes into the escrow     → receipt NFT minted: "Paid, held"
   → the store ships; the buyer taps "I got it" (or the confirm window passes)
   → anyone calls settle(order): the escrow reads the order's facts, asks the circuits
-      release → the store is paid, the store's tokens are minted to the buyer, receipt: "Delivered"
-      refund  → the buyer is paid back, no tokens,                              receipt: "Refunded"
+      release → the store is paid,          receipt: "Delivered"
+      refund  → the buyer is paid back,     receipt: "Refunded"
       neither → nothing moves yet (a dispute or review is open)
 ```
+
+The delivered order earns the buyer its store tokens and gets its Sotechy receipt, both on X Layer. A refunded order earns nothing.
 
 ## Check it yourself
 
@@ -91,11 +87,11 @@ What the contracts do, step by step: [contracts/README.md](contracts/README.md).
 | Repository | What's in it |
 |---|---|
 | **This one** (`sotechy-xlayer`) | Everything that runs on X Layer, all new for Build X: the circuits and their tests, the escrow, the receipt NFT contract, the deploy scripts and the DeWEB order checker |
-| [**Sotechy-App**](https://github.com/soke-dev/Sotechy-App) | The live Sotechy marketplace: the app, the store and admin dashboards, the website and the API. For Build X it gains the USDT pay page, the order screens, the X Layer watcher, X Layer as a main chain and paying with any coin into the escrow (listed below) |
+| [**Sotechy-App**](https://github.com/soke-dev/Sotechy-App) | The live Sotechy marketplace: the app, the store and admin dashboards, the website and the API. For Build X it gains the USDT pay page, the order screens, the X Layer watcher, and every order's store tokens and receipts written to X Layer (listed below) |
 
 ### The Build X changes in Sotechy-App
 
-All on `main`, live on [sotechy.shop](https://sotechy.shop). `apps/api/dev/xlayer-e2e.mjs` runs them end to end on a local copy of X Layer mainnet, with the real escrow and circuits: USDT paid, released and refunded; X Layer as the main chain; and a SOL payment through NEAR Intents, held and refunded.
+All on `main`, live on [sotechy.shop](https://sotechy.shop). `apps/api/dev/xlayer-e2e.mjs` runs them end to end on a local copy of X Layer mainnet, with the real escrow and circuits: USDT paid, released and refunded, and every order's store tokens and receipts written to X Layer.
 
 | Commit | What it adds |
 |---|---|
@@ -105,11 +101,9 @@ All on `main`, live on [sotechy.shop](https://sotechy.shop). `apps/api/dev/xlaye
 | [`494f3f7`](https://github.com/soke-dev/Sotechy-App/commit/494f3f7) | App: USDT on X Layer at checkout, and where the money is on each order, with a link to the order checker |
 | [`f0a45bc`](https://github.com/soke-dev/Sotechy-App/commit/f0a45bc) | Store dashboard: a USDT order's payouts go out when the circuits release the money |
 | [`a34ede9`](https://github.com/soke-dev/Sotechy-App/commit/a34ede9) | Store tokens and receipts deployed on X Layer |
-| [`44d5c97`](https://github.com/soke-dev/Sotechy-App/commit/44d5c97) | API: X Layer as a main chain for every order's tokens and receipts |
-| [`1a8b58e`](https://github.com/soke-dev/Sotechy-App/commit/1a8b58e) | Admin → Tokens: choose X Layer as the main chain |
-| [`50fa323`](https://github.com/soke-dev/Sotechy-App/commit/50fa323) | API: pay with any coin through NEAR Intents, settled as USDT into the escrow |
-| [`a9a3bc2`](https://github.com/soke-dev/Sotechy-App/commit/a9a3bc2) | App: paying with any coin says the USDT is held in the escrow on X Layer |
-| [`68e6f04`](https://github.com/soke-dev/Sotechy-App/commit/68e6f04) | X Layer starts from 24 November 2026: no history written there, and spending older tokens never gets stuck |
+| [`44d5c97`](https://github.com/soke-dev/Sotechy-App/commit/44d5c97) | API: every order's store tokens and receipts written to X Layer |
+| [`1a8b58e`](https://github.com/soke-dev/Sotechy-App/commit/1a8b58e) | Admin → Tokens: X Layer's contracts, what's waiting to be written, and the operator's OKB |
+| [`68e6f04`](https://github.com/soke-dev/Sotechy-App/commit/68e6f04) | API: tokens and receipts on X Layer from 24 November 2026 |
 
 ## Status
 
@@ -123,8 +117,7 @@ All on `main`, live on [sotechy.shop](https://sotechy.shop). `apps/api/dev/xlaye
 | Launch scripts (tape out, deploy, publish), rehearsed on a copy of mainnet | Done |
 | Mainnet: circuits taped out, contracts deployed, checker published on DeWEB | Done |
 | In Sotechy-App: the pay page, the order screens, the store and admin views | Done, live |
-| X Layer as Sotechy's main chain: every order's store tokens and receipts | Done, live behind the switch |
-| Paying with any coin through NEAR Intents, held in the escrow | Done, live behind the switch |
+| Every order's store tokens and receipts written to X Layer | Done, live |
 
 ## Deployments (X Layer mainnet, chain 196)
 
