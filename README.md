@@ -29,11 +29,18 @@ The payment isn't sent to the store. It waits in the Sotechy escrow contract, an
 
 The escrow does exactly what the circuits answer. Nobody, Sotechy included, can move the money any other way, and anyone can read the circuits on chain and check the rules.
 
-### 🪙 Store tokens, earned on delivery
-Every Sotechy store has its own token, one token id per store on a single multi-token contract. On X Layer, an order's tokens are minted **only when the circuit releases the money**, so a refunded or fake order earns nothing. Shoppers send tokens to friends by username, and spend them at the store.
+### 🪙 Store tokens on X Layer
+Every Sotechy store has its own token, one token id per store on a single multi-token contract (`SotechyTokens`). Shoppers earn a store's token on delivered orders, send it to friends by username, and spend it at the store.
 
-### 🧾 Receipt NFTs that show the verdict
-When the buyer pays, the order's receipt NFT is minted to their wallet. It follows the circuits' decisions (paid and held, delivered and store paid, refunded, or on hold during a dispute), and its picture is drawn on chain from that status. It holds no amounts or personal data.
+- **Orders paid into the escrow:** the escrow mints the earned tokens **only when the circuits release the money**, so a refunded or fake order earns nothing.
+- **X Layer as Sotechy's main chain:** every token change from every Sotechy order (earned, spent, sent, or taken back on a refund) is written to X Layer, however the order was paid, and Sotechy pays the gas. Sotechy's own record then writes escrow orders' tokens too, so nothing is minted twice and balances on X Layer always match Sotechy's.
+- X Layer starts from **24 November 2026**: changes from before then stay on the chain that already has them.
+
+### 🧾 Receipt NFTs
+Two kinds, both on X Layer. Neither can be sold or sent on, and neither holds amounts or personal data.
+
+- **Escrow receipt** (`SotechyOrderReceipts`): minted to the buyer when they pay into the escrow. It follows the circuits' decisions (paid and held, shipped, on hold during a dispute, delivered, refunded), and its picture is drawn on chain from that status.
+- **Sotechy receipt** (`SotechyReceipts`): with X Layer as the main chain, every completed Sotechy order gets one. It records the store, the order number, the date and a fingerprint of the full receipt Sotechy keeps, so anyone holding the receipt can check it.
 
 ### 🔍 A public order checker on DeWEB
 A page stored on chain, on our circuit's DeWEB container: enter an order number and see where its money is and what the circuits decided.
@@ -82,7 +89,7 @@ Two switches in Sotechy's admin dashboard, both off until turned on:
 | Switch | When it's on |
 |---|---|
 | **Settings → Pay with USDT on X Layer** | Checkout offers USDT on X Layer, with the money held by the escrow until the circuits release it. Orders show where the money is and let the buyer confirm delivery or report a problem. Stores see what's held and when it releases. Sotechy's team sees the money held, disputes and tripped breakers. |
-| **Tokens → Main chain → X Layer** | All orders' tokens and receipts are written to X Layer, and the wallet's "View on chain" links open X Layer's explorer. |
+| **Tokens → Main chain → X Layer** | Every order's store tokens and receipts are written to X Layer (from 24 November 2026 on), the wallet's "View on chain" links open X Layer's explorer, and paying with any coin settles as USDT into the escrow. |
 
 Turning the payment switch off only hides it for new orders: orders already paid that way still settle by the circuits.
 
@@ -116,7 +123,8 @@ Turning the payment switch off only hides it for new orders: orders already paid
 | **Store Breaker** circuit | **#28** on OrderGuard |
 | `SotechyEscrow` | [`0xdfEE90861e00ed79963edB7e7c11facdBF930310`](https://www.oklink.com/xlayer/address/0xdfEE90861e00ed79963edB7e7c11facdBF930310) |
 | `SotechyOrderReceipts` | [`0x80b42099567D5eF1A8e8421bD38ae6cAc589F180`](https://www.oklink.com/xlayer/address/0x80b42099567D5eF1A8e8421bD38ae6cAc589F180) |
-| `SotechyTokens` | [`0x704c1Fc6e6adb2De17436b509e196F1A57968f7B`](https://www.oklink.com/xlayer/address/0x704c1Fc6e6adb2De17436b509e196F1A57968f7B) |
+| `SotechyTokens` (store tokens) | [`0x704c1Fc6e6adb2De17436b509e196F1A57968f7B`](https://www.oklink.com/xlayer/address/0x704c1Fc6e6adb2De17436b509e196F1A57968f7B) |
+| `SotechyReceipts` (a receipt for every order) | [`0x04779caedcc9ecfd28a6a51cf85536be67db01db`](https://www.oklink.com/xlayer/address/0x04779caedcc9ecfd28a6a51cf85536be67db01db) |
 | Order checker on DeWEB | `26.2.272.tape`, at [26-2-272.tapekit.org](https://26-2-272.tapekit.org/) (stored in circuit #26's container [`0xc3595E8d2405BD2df6ceC4Ef73452a41A892F52D`](https://www.oklink.com/xlayer/address/0xc3595E8d2405BD2df6ceC4Ef73452a41A892F52D)) |
 | USD₮0 | [`0x779Ded0c9e1022225f8E0630b35a9b54bE713736`](https://www.oklink.com/xlayer/address/0x779Ded0c9e1022225f8E0630b35a9b54bE713736) |
 
@@ -135,7 +143,7 @@ docs/        the mainnet launch guide
 ## Hackathon work and baseline
 
 - **Everything in this repository is new**, written for Build X.
-- **Baseline:** the Sotechy marketplace ([Sotechy-App](https://github.com/soke-dev/Sotechy-App)) existed before the event. Its store-token contract is reused unchanged on X Layer. Only the Build X changes to Sotechy-App, listed above, are part of this entry.
+- **Baseline:** the Sotechy marketplace ([Sotechy-App](https://github.com/soke-dev/Sotechy-App)) existed before the event. Its store-token and receipt contracts are reused unchanged, deployed on X Layer during the event. Only the Build X changes to Sotechy-App, listed above, are part of this entry.
 
 ## Built with
 
