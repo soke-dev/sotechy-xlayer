@@ -20,6 +20,9 @@ Sotechy is a marketplace of verified stores in Nigeria, live on the App Store an
 ### 💸 Pay in USDT
 At checkout, a buyer pays the order's total in USDT (USD₮0) on X Layer, from OKX Wallet or any wallet. They need no OKB for gas: they sign a permit, and Sotechy sends the payment and pays the fee. X Layer's fees are a fraction of a cent, and USDT moves from the OKX exchange to X Layer cheaply, which suits Nigerian buyers who already hold dollars there.
 
+### 🌍 Or pay with any coin
+While X Layer is Sotechy's main chain, a buyer can also pay with almost any coin on almost any chain (SOL, BTC, ETH, TRX, USDC on Solana and more) through NEAR Intents. The swap delivers the order's exact USDT on X Layer to a pay-in address Sotechy holds for that one order. That address signs the same permit a wallet buyer would, and Sotechy puts the USDT in the escrow, so the circuits treat the order like any other. A refund goes back through NEAR Intents as the coin the buyer paid with, to the refund address they gave.
+
 ### 🛡️ TapeOut decides when the money moves
 The payment isn't sent to the store. It waits in the Sotechy escrow contract, and **TapeOut circuits decide what happens to it**:
 
@@ -63,7 +66,8 @@ The circuits are Sotechy's: each is an NFT on X Layer, so other marketplaces can
 
 ```
 Buyer picks "Pay with USDT on X Layer" in the Sotechy app
-  → pays the exact total into the escrow     → receipt NFT minted: "Paid, held"
+  (or any coin: NEAR Intents swaps it into the order's exact USDT on X Layer)
+  → the exact total goes into the escrow     → receipt NFT minted: "Paid, held"
   → the store ships; the buyer taps "I got it" (or the confirm window passes)
   → anyone calls settle(order): the escrow reads the order's facts, asks the circuits
       release → the store is paid, the store's tokens are minted to the buyer, receipt: "Delivered"
