@@ -86,32 +86,21 @@ bash script/rehearse.sh                                   # the whole launch on 
 
 What the contracts do, step by step: [contracts/README.md](contracts/README.md). Launching on mainnet: [docs/LAUNCH.md](docs/LAUNCH.md).
 
-## Turning it on in Sotechy
-
-Two switches in Sotechy's admin dashboard, both off until turned on:
-
-| Switch | When it's on |
-|---|---|
-| **Settings → Pay with USDT on X Layer** | Checkout offers USDT on X Layer, with the money held by the escrow until the circuits release it. Orders show where the money is and let the buyer confirm delivery or report a problem. Stores see what's held and when it releases. Sotechy's team sees the money held, disputes and tripped breakers. |
-| **Tokens → Main chain → X Layer** | Every order's store tokens and receipts are written to X Layer (from 24 November 2026 on), the wallet's "View on chain" links open X Layer's explorer, and paying with any coin settles as USDT into the escrow. |
-
-Turning the payment switch off only hides it for new orders: orders already paid that way still settle by the circuits.
-
 ## Two codebases
 
 | Repository | What's in it |
 |---|---|
 | **This one** (`sotechy-xlayer`) | Everything that runs on X Layer, all new for Build X: the circuits and their tests, the escrow, the receipt NFT contract, the deploy scripts and the DeWEB order checker |
-| [**Sotechy-App**](https://github.com/soke-dev/Sotechy-App) | The live Sotechy marketplace: the app, the store and admin dashboards, the website and the API. For Build X it gains the two switches, the USDT pay page, the order screens, the X Layer watcher, X Layer as a main chain and paying with any coin into the escrow (listed below) |
+| [**Sotechy-App**](https://github.com/soke-dev/Sotechy-App) | The live Sotechy marketplace: the app, the store and admin dashboards, the website and the API. For Build X it gains the USDT pay page, the order screens, the X Layer watcher, X Layer as a main chain and paying with any coin into the escrow (listed below) |
 
 ### The Build X changes in Sotechy-App
 
-All on `main`, live on [sotechy.shop](https://sotechy.shop) behind the two switches. `apps/api/dev/xlayer-e2e.mjs` runs them end to end on a local copy of X Layer mainnet, with the real escrow and circuits: USDT paid, released and refunded; X Layer as the main chain; and a SOL payment through NEAR Intents, held and refunded.
+All on `main`, live on [sotechy.shop](https://sotechy.shop). `apps/api/dev/xlayer-e2e.mjs` runs them end to end on a local copy of X Layer mainnet, with the real escrow and circuits: USDT paid, released and refunded; X Layer as the main chain; and a SOL payment through NEAR Intents, held and refunded.
 
 | Commit | What it adds |
 |---|---|
 | [`717d84f`](https://github.com/soke-dev/Sotechy-App/commit/717d84f) | API: pay with USDT on X Layer through the escrow, mirror each order step to it, and watch its events |
-| [`62f76dc`](https://github.com/soke-dev/Sotechy-App/commit/62f76dc) | Admin → Settings: the Pay with USDT on X Layer switch (nobody, Sotechy staff only, everyone), with the escrow's setup and the operator's gas |
+| [`62f76dc`](https://github.com/soke-dev/Sotechy-App/commit/62f76dc) | Admin → Settings: Pay with USDT on X Layer, with the escrow's setup and the operator's gas |
 | [`a479519`](https://github.com/soke-dev/Sotechy-App/commit/a479519) | The pay page, sotechy.shop/pay/usdt: connect a wallet or open it in OKX Wallet, sign a USD₮0 permit, no OKB needed |
 | [`494f3f7`](https://github.com/soke-dev/Sotechy-App/commit/494f3f7) | App: USDT on X Layer at checkout, and where the money is on each order, with a link to the order checker |
 | [`f0a45bc`](https://github.com/soke-dev/Sotechy-App/commit/f0a45bc) | Store dashboard: a USDT order's payouts go out when the circuits release the money |
@@ -133,7 +122,7 @@ All on `main`, live on [sotechy.shop](https://sotechy.shop) behind the two switc
 | DeWEB order checker page, and its publish script | Done |
 | Launch scripts (tape out, deploy, publish), rehearsed on a copy of mainnet | Done |
 | Mainnet: circuits taped out, contracts deployed, checker published on DeWEB | Done |
-| In Sotechy-App: the switches, the pay page, the order screens, the store and admin views | Done, live behind the switches |
+| In Sotechy-App: the pay page, the order screens, the store and admin views | Done, live |
 | X Layer as Sotechy's main chain: every order's store tokens and receipts | Done, live behind the switch |
 | Paying with any coin through NEAR Intents, held in the escrow | Done, live behind the switch |
 
