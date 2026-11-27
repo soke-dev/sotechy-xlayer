@@ -67,6 +67,7 @@ The circuits are Sotechy's: each is an NFT on X Layer, so other marketplaces can
 
 ```
 Buyer picks "Pay with USDT on X Layer" in the Sotechy app
+  (or any token: NEAR Intents swaps it into the order's exact USDT on X Layer)
   → the exact total goes into the escrow     → receipt NFT minted: "Paid, held"
   → the store ships; the buyer taps "I got it" (or the confirm window passes)
   → anyone calls settle(order): the escrow reads the order's facts, asks the circuits
@@ -93,11 +94,11 @@ What the contracts do, step by step: [contracts/README.md](contracts/README.md).
 | Repository | What's in it |
 |---|---|
 | **This one** (`sotechy-xlayer`) | Everything that runs on X Layer, all new for Build X: the circuits and their tests, the escrow, the receipt NFT contract, the deploy scripts and the DeWEB order checker |
-| [**Sotechy-App**](https://github.com/soke-dev/Sotechy-App) | The live Sotechy marketplace: the app, the store and admin dashboards, the website and the API. For Build X it gains the USDT pay page, the order screens, the X Layer watcher, and every order's store tokens and receipts written to X Layer (listed below) |
+| [**Sotechy-App**](https://github.com/soke-dev/Sotechy-App) | The live Sotechy marketplace: the app, the store and admin dashboards, the website and the API. For Build X it gains the USDT pay page, paying with any token into the escrow, the order screens, the X Layer watcher, and every order's store tokens and receipts written to X Layer (listed below) |
 
 ### The Build X changes in Sotechy-App
 
-All on `main`, live on [sotechy.shop](https://sotechy.shop). `apps/api/dev/xlayer-e2e.mjs` runs them end to end on a local copy of X Layer mainnet, with the real escrow and circuits: USDT paid, released and refunded, and every order's store tokens and receipts written to X Layer.
+All on `main`, live on [sotechy.shop](https://sotechy.shop). `apps/api/dev/xlayer-e2e.mjs` runs them end to end on a local copy of X Layer mainnet, with the real escrow and circuits: USDT paid, released and refunded; every order's store tokens and receipts written to X Layer; and a SOL payment through NEAR Intents, held in the escrow and refunded.
 
 | Commit | What it adds |
 |---|---|
@@ -109,6 +110,8 @@ All on `main`, live on [sotechy.shop](https://sotechy.shop). `apps/api/dev/xlaye
 | [`a34ede9`](https://github.com/soke-dev/Sotechy-App/commit/a34ede9) | Store tokens and receipts deployed on X Layer |
 | [`44d5c97`](https://github.com/soke-dev/Sotechy-App/commit/44d5c97) | API: every order's store tokens and receipts written to X Layer |
 | [`1a8b58e`](https://github.com/soke-dev/Sotechy-App/commit/1a8b58e) | Admin → Tokens: X Layer's contracts, what's waiting to be written, and the operator's OKB |
+| [`50fa323`](https://github.com/soke-dev/Sotechy-App/commit/50fa323) | API: pay with any token through NEAR Intents, settled as USDT into the escrow, with refunds sent back as the token paid |
+| [`a9a3bc2`](https://github.com/soke-dev/Sotechy-App/commit/a9a3bc2) | App: paying with any token says the USDT is held in the escrow on X Layer |
 | [`68e6f04`](https://github.com/soke-dev/Sotechy-App/commit/68e6f04) | API: tokens and receipts on X Layer from 24 November 2026 |
 
 ## Status
@@ -124,6 +127,7 @@ All on `main`, live on [sotechy.shop](https://sotechy.shop). `apps/api/dev/xlaye
 | Mainnet: circuits taped out, contracts deployed, checker published on DeWEB | Done |
 | In Sotechy-App: the pay page, the order screens, the store and admin views | Done, live |
 | Every order's store tokens and receipts written to X Layer | Done, live |
+| Paying with any token through NEAR Intents, settled to the escrow | Done, live |
 
 ## Deployments (X Layer mainnet, chain 196)
 
@@ -159,7 +163,7 @@ docs/        the mainnet launch guide
 
 ## Built with
 
-TapeOut (OrderGuard processor, TAP-02 netlists, DeWEB) · X Layer mainnet (chain 196) · USD₮0 · Solidity and Foundry · TypeScript and viem · Sotechy's app (Expo), dashboards (Next.js) and API (Hono)
+TapeOut (OrderGuard processor, TAP-02 netlists, DeWEB) · X Layer mainnet (chain 196) · USD₮0 · NEAR Intents · Solidity and Foundry · TypeScript and viem · Sotechy's app (Expo), dashboards (Next.js) and API (Hono)
 
 ## Team
 
