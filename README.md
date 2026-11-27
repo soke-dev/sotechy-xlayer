@@ -29,12 +29,6 @@ The escrow does exactly what the circuits answer. Nobody, Sotechy included, can 
 ### 🌍 Pay with any token, settled to the escrow (powered by NEAR Intents)
 A buyer can pay with almost any token on almost any chain: SOL, BTC, ETH, TRX, USDC on Solana and more. NEAR Intents swaps it into the order's exact USDT on X Layer and delivers it to a pay-in address Sotechy holds for that one order. That address signs the same permit a wallet buyer would, and Sotechy puts the USDT in the escrow, so the circuits treat the order like any other. A refund goes back through NEAR Intents as the token the buyer paid with, to the refund address they gave.
 
-### 💸 Pay in USDT
-At checkout, a buyer pays the order's total in USDT (USD₮0) on X Layer, from OKX Wallet or any wallet. They need no OKB for gas: they sign a permit, and Sotechy sends the payment and pays the fee. X Layer's fees are a fraction of a cent, and USDT moves from the OKX exchange to X Layer cheaply, which suits Nigerian buyers who already hold dollars there.
-
-### 🇳🇬 Paid in naira? Still on X Layer
-Most Sotechy orders are paid in naira by bank transfer. The escrow holds only USDT, so a naira payment stays with Sotechy and the store is paid on Sotechy's usual schedule. The order still earns its store tokens and gets its Sotechy receipt on X Layer, like every other order.
-
 ### 🪙 Store tokens on X Layer
 Every Sotechy store has its own token, one token id per store on a single multi-token contract (`SotechyTokens`). Shoppers earn a store's token when an order is delivered, send it to friends by username, and spend it at the store.
 
@@ -48,6 +42,12 @@ Two kinds, both on X Layer. Neither can be sold or sent on, and neither holds am
 
 ### 🔍 A public order checker on DeWEB
 A page stored on chain, on our circuit's DeWEB container: enter an order number and see where its money is and what the circuits decided.
+
+### 💸 Pay in USDT
+At checkout, a buyer pays the order's total in USDT (USD₮0) on X Layer, from OKX Wallet or any wallet. They need no OKB for gas: they sign a permit, and Sotechy sends the payment and pays the fee. X Layer's fees are a fraction of a cent, and USDT moves from the OKX exchange to X Layer cheaply, which suits Nigerian buyers who already hold dollars there.
+
+### 🇳🇬 Paid in naira? Still on X Layer
+Most Sotechy orders are paid in naira by bank transfer. The escrow holds only USDT, so a naira payment stays with Sotechy and the store is paid on Sotechy's usual schedule. The order still earns its store tokens and gets its Sotechy receipt on X Layer, like every other order.
 
 ## Where TapeOut is used
 
