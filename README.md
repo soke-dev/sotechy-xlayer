@@ -3,6 +3,9 @@
   <h1>Sotechy × X Layer</h1>
   <p><strong>The tokenized marketplace of verified stores, on X Layer: pay in USDT, earn store tokens, keep your receipt as an NFT, and let TapeOut circuits decide when your money moves.</strong></p>
   <p>
+    Live on the <a href="https://apps.apple.com/ng/app/sotechy/id6829889326">App Store</a>, Google Play and the <a href="https://sotechy.shop">web</a>
+  </p>
+  <p>
     Built for the <strong>X Layer Build X</strong> hackathon (TapeOut) ·
     <a href="https://sotechy.shop">sotechy.shop</a> ·
     Main app: <a href="https://github.com/soke-dev/Sotechy-App">soke-dev/Sotechy-App</a>
@@ -13,7 +16,7 @@
 
 > **Status: live on X Layer mainnet.** Built for Build X, November to December 2026. The [Status](#status) table says what works today, and [Deployments](#deployments-x-layer-mainnet-chain-196) lists every address.
 
-Sotechy is a marketplace of verified stores in Nigeria, live on the App Store and the web. Every store has its own reward token, and every order gets a receipt. Buying online there runs on low trust: buyers pay strangers and hope the order arrives, and stores fear buyers who say it never did. This project brings Sotechy's checkout, rewards and receipts onto X Layer, and puts TapeOut circuits in charge of the money between buyer and store.
+Sotechy is a marketplace of verified stores in Nigeria, live on the App Store, Google Play and the web. Every store has its own reward token, and every order gets a receipt. Buying online there runs on low trust: buyers pay strangers and hope the order arrives, and stores fear buyers who say it never did. This project brings Sotechy's checkout, rewards and receipts onto X Layer, and puts TapeOut circuits in charge of the money between buyer and store.
 
 ## What's on X Layer
 
